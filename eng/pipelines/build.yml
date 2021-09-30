@@ -19,9 +19,9 @@ resources:
       type: github
       name: Azure/azure-sdk-tools
       endpoint: azure
-    - repository: azure-sdk-for-net
+    - repository: azure-sdk-for-go
       type: github
-      name: Azure/azure-sdk-for-net
+      name: Azure/azure-sdk-for-go
       endpoint: azure
     - repository: azure-sdk-build-tools
       type: git
@@ -109,38 +109,44 @@ stages:
   #       parameters:
   #         name: SmokeTest_S_Z
   #         filter: "^[s-z]"
-  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
-      parameters:
-        ShouldTag: false
-        ShouldSign: false
-        ShouldPublishSymbols: false
-    - stage: 'Update_azure_sdk_for_net'
-      dependsOn:
-        - Build_and_Test
-        - Release
-      jobs:
-        - job: Update
-          pool:
-            vmImage: ubuntu-20.04
-          variables:
-            AutorestCSharpVersion: $[stageDependencies.Build_and_Test.Build.outputs['Package.AutorestCSharpVersion']]
-          steps:
-            - checkout: self
-            - checkout: azure-sdk-for-net
-            - checkout: azure-sdk-tools
-            - pwsh: ./eng/UpdateAzureSdkForNet.ps1 -Version $(AutorestCSharpVersion) -SdkRepoRoot $(Build.SourcesDirectory)/azure-sdk-for-net
-              failOnStderr: false
-              workingDirectory: $(Build.SourcesDirectory)/autorest.csharp
-              displayName: 'Update generator version in Azure SDK repo'
-            - template: /eng/common/pipelines/templates/steps/create-pull-request.yml@azure-sdk-tools
-              parameters:
-                BaseBranchName: main
-                RepoName: azure-sdk-for-net
-                PRBranchName: auto-update-autorest
-                CommitMsg: Update AutoRest C# version to $(AutorestCSharpVersion)
-                PRBody: Update AutoRest C# version to $(AutorestCSharpVersion)
-                PRTitle:  Update AutoRest C# version
-                PushArgs: -f
-                WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-for-net
-                ScriptDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts
+
+  # TODO: disabled this condition to make development easier. Add an appropriate condition here when the job works.
+  # - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+    # - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
+    #   parameters:
+    #     ShouldTag: false
+    #     ShouldSign: false
+    #     ShouldPublishSymbols: false
+
+  - stage: 'Update_azure_sdk_for_go'
+    # dependsOn:
+    #   - Build_and_Test
+    #   - Release
+    jobs:
+      - job: Update
+        pool:
+          vmImage: ubuntu-20.04
+        # TODO: script doesn't need the version to run (can just point it at autorest.go dir) but would be nice to update the script's default autorest.go version
+        # variables:
+          # AutorestGoVersion: $[stageDependencies.Build_and_Test.Build.outputs['Package.AutorestGoVersion']]
+        steps:
+          - checkout: self
+          - checkout: azure-sdk-for-go
+          - checkout: azure-sdk-tools
+          - pwsh: ./build.ps1 -cleanGenerated -generate -goExtension=$(Build.SourcesDirectory)/autorest.go
+            failOnStderr: true
+            workingDirectory: $(Build.SourcesDirectory)/azure-sdk-for-go/eng/scripts
+            displayName: 'Generate code in Azure SDK repo'
+
+          # TODO: this step should open a PR in Azure/azure-sdk-for-go, maybe test it on the fork first ;-)
+          # - template: /eng/common/pipelines/templates/steps/create-pull-request.yml@azure-sdk-tools
+          #   parameters:
+          #     BaseBranchName: main
+          #     RepoName: azure-sdk-for-go
+          #     PRBranchName: auto-update-autorest
+          #     CommitMsg: Update autorest.go version to $(AutorestGoVersion)
+          #     PRBody: Update autorest.go version to $(AutorestGoVersion)
+          #     PRTitle:  Update autorest.go version
+          #     PushArgs: -f
+          #     WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-for-go
+          #     ScriptDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts
