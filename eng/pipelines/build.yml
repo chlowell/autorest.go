@@ -49,11 +49,8 @@ stages:
               npm install -g "@microsoft/rush"
               rush update --debug
               npm install -g autorest
-            displayName: 'Prepare Generator Environment'
-
-          - script: |
               rush rebuild -v
-            displayName: 'Build Generator Sources'
+            displayName: 'Build autorest.go'
 
           # - script: |
           #     rush regenerate
