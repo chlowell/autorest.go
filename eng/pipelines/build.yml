@@ -15,7 +15,6 @@ variables:
   GOBIN: '$(system.defaultWorkingDirectory)/bin/go'
   BlobFeedUrl: https://azuresdkartifacts.blob.core.windows.net/azure-sdk-tools/index.json
   OfficialBuildId: $(Build.BuildNumber)
-  # NugetSecurityAnalysisWarningLevel: 'none'
 
 resources:
   repositories:
@@ -27,10 +26,6 @@ resources:
       type: github
       name: Azure/azure-sdk-for-go
       endpoint: azure
-    # - repository: azure-sdk-build-tools
-    #   type: git
-    #   name: internal/azure-sdk-build-tools
-    #   ref: refs/tags/azure-sdk-build-tools_20210603.1
 
 stages:
   - stage: 'Generate_SDK'
@@ -52,106 +47,6 @@ stages:
               rush rebuild -v
             displayName: 'Build autorest.go'
 
-          # - script: |
-          #     rush regenerate
-          #     git add -A ./test/.
-          #     git diff --staged -w 1>&2
-          #   displayName: 'Regenerate Autorest Tests'
-          #   failOnStderr: true
-
-          # - task: GoTool@0
-          #   inputs:
-          #     version: '$(go.version)'
-          #   displayName: "Select Go Version"
-
-          # - script: |
-          #     set -e
-          #     go version
-          #     go get github.com/jstemmer/go-junit-report
-          #   displayName: 'Install Dependencies'
-          #   workingDirectory: '$(goTestPath)'
-
-          # - pwsh: |
-          #     $modDirs = (./eng/scripts/get_module_dirs.ps1 -serviceDir $(goTestPath))
-          #     $exit = 0
-          #     foreach ($md in $modDirs) {
-          #       pushd $md
-          #       Write-Host "##[command]Executing go build -v ./... in $md"
-          #       go build -v ./...
-          #       if (!$?) {
-          #         $exit = 1
-          #       }
-          #     }
-          #     exit $exit
-          #   displayName: 'Build'
-
-          # - pwsh: |
-          #     $modDirs = (./eng/scripts/get_module_dirs.ps1 -serviceDir $(goTestPath))
-          #     $exit = 0
-          #     foreach ($md in $modDirs) {
-          #       pushd $md
-          #       Write-Host "##[command]Executing go mod tidy in $md"
-          #       go mod tidy
-          #       $diff = (git diff -w .)
-          #       write-host ($diff -join "`n")
-          #       if ($diff.Length -gt 0) {
-          #         $exit = 1
-          #       }
-          #     }
-          #     exit $exit
-          #   displayName: 'Mod Tidy'
-
-          # - pwsh: |
-          #     $modDirs = (./eng/scripts/get_module_dirs.ps1 -serviceDir $(goTestPath))
-          #     $exit = 0
-          #     foreach ($md in $modDirs) {
-          #       pushd $md
-          #       Write-Host "##[command]Executing go vet ./... in $md"
-          #       go vet ./...
-          #       if (!$?) {
-          #         $exit = 1
-          #       }
-          #     }
-          #     exit $exit
-          #   displayName: 'Vet'
-
-          # - pwsh: |
-          #     pushd ./src/node_modules/@microsoft.azure/autorest.testserver
-          #     npm run start:prod&
-          #     popd
-          #     $testDirs = (./eng/scripts/get_test_dirs.ps1 -serviceDir $(goTestPath))
-          #     foreach ($td in $testDirs) {
-          #       pushd $td
-          #       Write-Host "##[command]Executing go test -run "^Test" -v $td | $(GOBIN)/go-junit-report -set-exit-code > report.xml"
-          #       go test -run "^Test" -v | $(GOBIN)/go-junit-report -set-exit-code > report.xml
-          #       popd
-          #     }
-          #     pushd test
-          #     go run ./autorest/covreport/main.go
-          #     popd
-          #     pushd ./src/node_modules/@microsoft.azure/autorest.testserver
-          #     npm stop
-          #     popd
-          #   displayName: 'Run Acceptance Tests'
-
-          # - pwsh: npm test
-          #   displayName: 'Run Unit Tests'
-          #   workingDirectory: $(System.DefaultWorkingDirectory)/src
-
-          # - task: PublishTestResults@2
-          #   inputs:
-          #     testRunner: JUnit
-          #     testResultsFiles: $(goTestPath)/**/report.xml
-          #     failTaskOnFailedTests: true
-
-
-  # TODO: disabled this condition to make development easier. Add an appropriate condition here when the job works.
-  # - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-
-    # TODO: script doesn't need the version to run (can just point it at autorest.go dir) but would be nice to update the script's default autorest.go version
-        # variables:
-          # AutorestGoVersion: $[stageDependencies.Build_and_Test.Build.outputs['Package.AutorestGoVersion']]
-        - task: Generate
           - checkout: self
           - checkout: azure-sdk-for-go
           - checkout: azure-sdk-tools
