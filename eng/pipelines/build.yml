@@ -151,6 +151,7 @@ stages:
     # TODO: script doesn't need the version to run (can just point it at autorest.go dir) but would be nice to update the script's default autorest.go version
         # variables:
           # AutorestGoVersion: $[stageDependencies.Build_and_Test.Build.outputs['Package.AutorestGoVersion']]
+        - task: Generate
           - checkout: self
           - checkout: azure-sdk-for-go
           - checkout: azure-sdk-tools
