@@ -101,3 +101,22 @@ steps:
       echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" > ./.npmrc
       npm publish --access public
     displayName: 'Publish to npm'
+
+  - checkout: azure-sdk-for-go
+  - checkout: azure-sdk-tools
+  - pwsh: ./eng/update_azure_sdk_for_go.ps1 -version $currentVersion -sdkRepoRoot $(Agent.BuildDirectory)/s/azure-sdk-for-go
+    failOnStderr: true
+    displayName: 'Generate code in Azure SDK repo'
+
+  # TODO: this step should open a PR in Azure/azure-sdk-for-go, maybe test it on the fork first ;-)
+  # - template: /eng/common/pipelines/templates/steps/create-pull-request.yml@azure-sdk-tools
+  #   parameters:
+  #     BaseBranchName: main
+  #     RepoName: azure-sdk-for-go
+  #     PRBranchName: auto-update-autorest
+  #     CommitMsg: Update autorest.go version to $(AutorestGoVersion)
+  #     PRBody: Update autorest.go version to $(AutorestGoVersion)
+  #     PRTitle:  Update autorest.go version
+  #     PushArgs: -f
+  #     WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-for-go
+  #     ScriptDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts
