@@ -51,9 +51,9 @@ stages:
 
           - checkout: azure-sdk-for-go
           - checkout: azure-sdk-tools
-          - pwsh: ./build.ps1 -cleanGenerated -generate -goExtension=$(Agent.BuildDirectory)/s/autorest.go
+          - pwsh: ./update_azure_sdk_for_go.ps1 -version $currentVersion -sdkRepoRoot $(Agent.BuildDirectory)/s/azure-sdk-for-go
+            workingDirectory: $(Agent.BuildDirectory)/s/autorest.go/eng/scripts
             failOnStderr: true
-            workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-for-go/eng/scripts
             displayName: 'Generate code in Azure SDK repo'
 
           # TODO: this step should open a PR in Azure/azure-sdk-for-go, maybe test it on the fork first ;-)
